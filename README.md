@@ -37,7 +37,7 @@ python show_tree_gui.py
 
 ### Executable File
 
-Windows users can directly download the `.exe` file from the [Releases page](https://github.com/yourname/dir-tree-viewer/releases)
+Windows users can directly download the `.exe` file from the [Releases page](https://github.com/RyanJoo28/directory-tree-viewer/releases)
 
 ## 🛠️ Development Build
 

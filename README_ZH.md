@@ -37,7 +37,7 @@ python show_tree_gui.py
 
 ### 可执行文件
 
-Windows用户可直接下载 [Releases页面](https://github.com/yourname/dir-tree-viewer/releases) 的 `.exe` 文件
+Windows用户可直接下载 [Releases](https://github.com/RyanJoo28/directory-tree-viewer/releases) 的 `.exe` 文件
 
 ## 🛠️ 开发构建
 
