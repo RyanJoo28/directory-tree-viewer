@@ -4,7 +4,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![GUI支持](https://img.shields.io/badge/GUI-Tkinter-orange)
 
-**多语言目录结构可视化工具** | [English](#-features) | [中文](#-功能特性)
+**多语言目录结构可视化工具** | [English](./README.md) | 中文
 
 ---
 

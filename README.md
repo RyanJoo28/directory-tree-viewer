@@ -4,7 +4,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![GUI Support](https://img.shields.io/badge/GUI-Tkinter-orange)
 
-**Multilingual Directory Structure Visualization Tool** | [English](#-features) | [中文](#-功能特性)
+**Multilingual Directory Structure Visualization Tool** | English | [中文](./README_ZH.md)
 
 ---
 
