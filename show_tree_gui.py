@@ -9,7 +9,7 @@ import os
 import sys
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, PhotoImage
-from pypinyin import pinyin, Style  # 用于中文拼音处理
+from pypinyin import pinyin, Style
 
 # ======================== 多语言支持 ========================
 # 支持的语言: 简体中文/繁体中文/英文/日文/韩文
@@ -38,7 +38,102 @@ LANG = {
         'about_content': '目录结构查看器 v1.0\n\nCopyright © 2025 Ryan Joo\n\n一款简单易用的目录结构生成工具',
         'empty_filename': '请输入文件名',
     },
-    # ... 其他语言翻译（此处省略保持简洁）
+    'zh-TW': {
+        'title': '目錄結構查看器',
+        'label': '目錄路徑：',
+        'generate': '生成',
+        'save_txt': '保存為文本',
+        'save_md': '保存為Markdown',
+        'choose_dir': '瀏覽...',
+        'error': '錯誤',
+        'invalid_path': '目錄路徑無效或不存在',
+        'empty': '沒有可保存的目錄結構',
+        'save_success': '目錄結構已保存到：\n{}',
+        'save_fail': '保存失敗',
+        'copy': '複製內容',
+        'copy_success': '內容已複製！',
+        'copy_empty': '沒有內容可複製',
+        'clear': '清空內容',
+        'clear_success': '內容已清空',
+        'options_menu': '選項',
+        'language_menu': '語言',
+        'about': '關於',
+        'about_title': '關於目錄結構查看器',
+        'about_content': '目錄結構查看器 v1.0\n\nCopyright © 2025 Ryan Joo\n\n一款簡單易用的目錄結構生成工具',
+        'empty_filename': '請輸入檔案名稱',
+    },
+    'ja': {
+        'title': 'ディレクトリツリービューアー',
+        'label': 'ディレクトリパス：',
+        'generate': '生成',
+        'save_txt': 'テキストで保存',
+        'save_md': 'Markdownで保存',
+        'choose_dir': '参照...',
+        'error': 'エラー',
+        'invalid_path': '無効なディレクトリパスまたは存在しません',
+        'empty': '保存可能なディレクトリ構造がありません',
+        'save_success': 'ディレクトリ構造を保存しました：\n{}',
+        'save_fail': '保存に失敗しました',
+        'copy': '内容をコピー',
+        'copy_success': '内容をコピーしました！',
+        'copy_empty': 'コピーする内容がありません',
+        'clear': '内容をクリア',
+        'clear_success': '内容をクリアしました',
+        'options_menu': 'オプション',
+        'language_menu': '言語',
+        'about': 'について',
+        'about_title': 'ディレクトリツリービューアーについて',
+        'about_content': 'ディレクトリツリービューアー v1.0\n\nCopyright © 2025 Ryan Joo\n\nディレクトリ構造を生成するシンプルなツール',
+        'empty_filename': 'ファイル名を入力してください',
+    },
+    'ko': {
+        'title': '디렉토리 트리 뷰어',
+        'label': '디렉토리 경로：',
+        'generate': '생성',
+        'save_txt': '텍스트로 저장',
+        'save_md': 'Markdown으로 저장',
+        'choose_dir': '찾아보기...',
+        'error': '오류',
+        'invalid_path': '유효하지 않은 디렉토리 경로 또는 존재하지 않음',
+        'empty': '저장할 디렉토리 구조가 없습니다',
+        'save_success': '디렉토리 구조가 저장되었습니다：\n{}',
+        'save_fail': '저장 실패',
+        'copy': '내용 복사',
+        'copy_success': '내용이 복사되었습니다！',
+        'copy_empty': '복사할 내용이 없습니다',
+        'clear': '내용 지우기',
+        'clear_success': '내용이 지워졌습니다',
+        'options_menu': '옵션',
+        'language_menu': '언어',
+        'about': '정보',
+        'about_title': '디렉토리 트리 뷰어 정보',
+        'about_content': '디렉토리 트리 뷰어 v1.0\n\nCopyright © 2025 Ryan Joo\n\n디렉토리 구조를 생성하는 간단한 도구',
+        'empty_filename': '파일 이름을 입력하세요',
+    },
+    'en': {
+        'title': 'Directory Tree Viewer',
+        'label': 'Path:',
+        'generate': 'Generate',
+        'save_txt': 'Save as .txt',
+        'save_md': 'Save as .md',
+        'choose_dir': 'Browse...',
+        'error': 'Error',
+        'invalid_path': 'Invalid directory path',
+        'empty': 'No content to save',
+        'save_success': 'Saved to:\n{}',
+        'save_fail': 'Save failed',
+        'copy': 'Copy',
+        'copy_success': 'Copied!',
+        'copy_empty': 'No content',
+        'clear': 'Clear',
+        'clear_success': 'Content cleared',
+        'options_menu': 'Options',
+        'language_menu': 'Language',
+        'about': 'About',
+        'about_title': 'About Directory Tree Viewer',
+        'about_content': 'Directory Tree Viewer v1.0\n\nCopyright © 2025 Ryan Joo\n\nA simple tool for generating directory structures',
+        'empty_filename': 'Please enter a file name',
+    }
 }
 
 # 语言选项配置（语言代码，显示名称）
@@ -57,9 +152,16 @@ def get_sort_key(item):
     first_char = item[1][0]
     if ord(first_char) > 255:  # 非ASCII字符
         try:
+            # 中文、日文、韩文字符处理
             if '\u4e00' <= first_char <= '\u9fff':  # 中文
                 return pinyin(first_char, style=Style.NORMAL)[0][0]
-            else:  # 日文/韩文
+            elif '\u3040' <= first_char <= '\u309f':  # 日文平假名
+                return first_char
+            elif '\u30a0' <= first_char <= '\u30ff':  # 日文片假名
+                return first_char
+            elif '\uac00' <= first_char <= '\ud7a3':  # 韩文
+                return first_char
+            else:
                 return first_char
         except:
             return first_char
@@ -81,8 +183,6 @@ def tr(key):
 
 # ======================== 主应用类 ========================
 class DirectoryTreeApp:
-    """目录树生成器主应用类"""
-
     def __init__(self, root):
         """初始化应用窗口"""
         self.root = root
@@ -104,16 +204,25 @@ class DirectoryTreeApp:
         self.main_frame.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
 
         # 构建界面组件
-        self._setup_header()  # 顶部区域
-        self._setup_tree_display()  # 主显示区域
-        self._setup_statusbar()  # 状态栏
-        self._setup_menus()  # 菜单栏
+        self._setup_header()
+        self._setup_tree_display()
+        self._setup_statusbar()
+        self._setup_menus()
 
     def _configure_styles(self):
         """配置GUI样式"""
         self.style.configure('TFrame', background='#f5f5f5')
         self.style.configure('TButton', padding=6, font=('Segoe UI', 10))
-        # ...（其他样式配置略）...
+        self.style.configure('TEntry', padding=5, font=('Segoe UI', 10))
+        self.style.configure(
+            'TLabel', background='#f5f5f5', font=('Segoe UI', 10))
+        self.style.configure(
+            'Status.TLabel', background='#e0e0e0', relief=tk.SUNKEN, padding=5)
+
+        self.style.configure('Primary.TButton', foreground='white', background='#2c7be5',
+                             font=('Segoe UI', 10, 'bold'))
+        self.style.configure('Warning.TButton', foreground='white', background='#dc3545',
+                             font=('Segoe UI', 10))
 
     def _setup_header(self):
         """创建顶部路径选择区域"""
@@ -131,7 +240,8 @@ class DirectoryTreeApp:
         self.entry_path.bind('<Return>', lambda e: self.display_tree())
 
         # 目录浏览按钮
-        ttk.Button(path_frame, text=tr('choose_dir'), command=self.browse_directory).pack(side=tk.LEFT)
+        ttk.Button(path_frame, text=tr('choose_dir'),
+                   command=self.browse_directory).pack(side=tk.LEFT)
 
         # 生成按钮
         btn_frame = ttk.Frame(header_frame)
@@ -148,7 +258,8 @@ class DirectoryTreeApp:
         text_frame = ttk.Frame(display_frame)
         text_frame.pack(expand=True, fill=tk.BOTH)
 
-        self.text_output = tk.Text(text_frame, wrap=tk.WORD, font=('Consolas', 10), padx=10, pady=10)
+        self.text_output = tk.Text(text_frame, wrap=tk.WORD, font=(
+            'Consolas', 10), padx=10, pady=10)
         scrollbar = ttk.Scrollbar(text_frame, command=self.text_output.yview)
         self.text_output.config(yscrollcommand=scrollbar.set)
 
@@ -159,7 +270,8 @@ class DirectoryTreeApp:
         btn_frame = ttk.Frame(display_frame)
         btn_frame.pack(fill=tk.X, pady=(5, 0))
 
-        self.btn_copy = ttk.Button(btn_frame, text=tr('copy'), command=self.copy_to_clipboard)
+        self.btn_copy = ttk.Button(btn_frame, text=tr(
+            'copy'), command=self.copy_to_clipboard)
         self.btn_copy.pack(side=tk.LEFT, padx=5)
 
         self.btn_clear = ttk.Button(btn_frame, text=tr('clear'), style='Warning.TButton',
@@ -167,14 +279,17 @@ class DirectoryTreeApp:
         self.btn_clear.pack(side=tk.LEFT, padx=5)
 
         # 保存按钮
-        ttk.Button(btn_frame, text=tr('save_txt'), command=lambda: self.save_output(False)).pack(side=tk.LEFT, padx=5)
-        ttk.Button(btn_frame, text=tr('save_md'), command=lambda: self.save_output(True)).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text=tr('save_txt'), command=lambda: self.save_output(
+            False)).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text=tr('save_md'), command=lambda: self.save_output(
+            True)).pack(side=tk.LEFT, padx=5)
 
     def _setup_statusbar(self):
         """创建底部状态栏"""
         status_frame = ttk.Frame(self.root)
         status_frame.pack(side=tk.BOTTOM, fill=tk.X)
-        ttk.Label(status_frame, text="Copyright © 2025 Ryan Joo", style='Status.TLabel').pack(side=tk.RIGHT, padx=5)
+        ttk.Label(status_frame, text="Copyright © 2025 Ryan Joo",
+                  style='Status.TLabel').pack(side=tk.RIGHT, padx=5)
 
     def _setup_menus(self):
         """创建菜单系统"""
@@ -212,11 +327,17 @@ class DirectoryTreeApp:
 
     def _update_widget_texts(self):
         """更新界面控件上的文本（多语言支持）"""
-        # 获取需要更新的控件列表及对应的翻译键
         widgets = [
             (self.entry_path.master.winfo_children()[0], 'label'),
             (self.entry_path.master.winfo_children()[2], 'choose_dir'),
-            # ...（其他控件绑定略）...
+            (self.main_frame.winfo_children()[0].winfo_children()[
+                 1].winfo_children()[0], 'generate'),
+            (self.btn_copy, 'copy'),
+            (self.btn_clear, 'clear'),
+            *[(btn, text) for btn, text in zip(
+                self.main_frame.winfo_children()[1].winfo_children()[
+                    1].winfo_children()[2:4],
+                ['save_txt', 'save_md'])]
         ]
 
         # 遍历更新所有控件文本
@@ -244,18 +365,12 @@ class DirectoryTreeApp:
             格式化的目录树字符串
         """
         tree_str = f"{prefix}{os.path.basename(dir_path)}/\n"
-        prefix += '....'  # 每层增加4个空格缩进
-
+        prefix += '....'
         try:
-            # 遍历目录并排序展示
             for item in sorted(os.listdir(dir_path)):
                 path = os.path.join(dir_path, item)
-                if os.path.isdir(path):
-                    # 递归处理子目录
-                    tree_str += self.generate_tree(path, prefix)
-                else:
-                    # 文件项
-                    tree_str += f"{prefix}{item}\n"
+                tree_str += self.generate_tree(path, prefix) if os.path.isdir(
+                    path) else f"{prefix}{item}\n"
         except PermissionError:
             tree_str += f"{prefix}[Permission Denied]\n"
         return tree_str
@@ -283,8 +398,7 @@ class DirectoryTreeApp:
             as_md: 是否为Markdown格式（默认False为纯文本）
         """
         # 获取文本框内容
-        content = self.text_output.get(1.0, tk.END).strip()
-        if not content:
+        if not (content := self.text_output.get(1.0, tk.END).strip()):
             messagebox.showwarning(tr('error'), tr('empty'))
             return
 
@@ -293,7 +407,8 @@ class DirectoryTreeApp:
         default_name = f"{default_dir}_tree.{'md' if as_md else 'txt'}" if default_dir else "directory_tree"
 
         # 设置文件类型过滤器
-        filetypes = [("Markdown Files", "*.md")] if as_md else [("Text Files", "*.txt")]
+        filetypes = [("Markdown Files", "*.md")
+                     ] if as_md else [("Text Files", "*.txt")]
 
         # 弹出保存对话框
         file_path = filedialog.asksaveasfilename(
@@ -303,7 +418,8 @@ class DirectoryTreeApp:
             title=tr('save_md') if as_md else tr('save_txt')
         )
 
-        if not file_path:  # 用户取消
+        # 如果用户取消或未选择文件，直接返回
+        if not file_path:
             return
 
         # 写入文件
@@ -316,13 +432,13 @@ class DirectoryTreeApp:
 
     def copy_to_clipboard(self):
         """复制文本框内容到剪贴板"""
-        content = self.text_output.get(1.0, tk.END).strip()
-        if content:
+        if content := self.text_output.get(1.0, tk.END).strip():
             self.root.clipboard_clear()
             self.root.clipboard_append(content)
             # 显示成功提示（2秒后恢复）
             self.btn_copy.config(text=tr('copy_success'))
-            self.root.after(2000, lambda: self.btn_copy.config(text=tr('copy')))
+            self.root.after(
+                2000, lambda: self.btn_copy.config(text=tr('copy')))
         else:
             messagebox.showinfo(tr('error'), tr('copy_empty'))
 
@@ -334,9 +450,8 @@ class DirectoryTreeApp:
         self.root.after(2000, lambda: self.btn_clear.config(text=tr('clear')))
 
 
-# ======================== 程序入口 ========================
 if __name__ == "__main__":
-    root = tk.Tk()  # 创建主窗口
+    root = tk.Tk()
 
 
     def get_resource_path(relative_path):
@@ -349,20 +464,20 @@ if __name__ == "__main__":
             资源的绝对路径
         """
         try:
-            base_path = sys._MEIPASS  # PyInstaller临时目录
+            base_path = sys._MEIPASS  # PyInstaller 临时目录
         except AttributeError:
             base_path = os.path.dirname(os.path.abspath(__file__))  # 当前文件目录
         return os.path.join(base_path, relative_path)
 
 
-    # 尝试加载程序图标
+    # 尝试加载图标
     try:
         ico_path = get_resource_path('iconmonstr-folder-30.ico')
-        root.iconbitmap(ico_path)  # Windows .ico
-    except Exception:
+        root.iconbitmap(ico_path)  # Windows 优先使用 .ico
+    except Exception as e:
         try:
             png_path = get_resource_path('iconmonstr-folder-30.png')
-            img = PhotoImage(file=png_path)  # macOS/Linux
+            img = PhotoImage(file=png_path)  # 备用方案（macOS/Linux）
             root.iconphoto(True, img)
         except Exception as e:
             print(f"图标加载失败: {e}")  # 失败提示（不影响运行）
