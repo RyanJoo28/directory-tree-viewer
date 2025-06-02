@@ -1,8 +1,9 @@
 """
 目录结构查看器 - show_tree_gui.py
 功能：生成可视化的目录结构树，支持多语言、保存文件、复制内容等功能
+新增：支持拖放文件夹到输入框自动识别路径
 作者：Ryan Joo
-版本：v1.0
+版本：v1.1
 """
 
 import os
@@ -10,6 +11,7 @@ import sys
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, PhotoImage
 from pypinyin import pinyin, Style
+from tkinterdnd2 import DND_FILES, TkinterDnD
 
 # ======================== 多语言支持 ========================
 # 支持的语言: 简体中文/繁体中文/英文/日文/韩文
@@ -37,6 +39,7 @@ LANG = {
         'about_title': '关于目录结构查看器',
         'about_content': '目录结构查看器 v1.0\n\nCopyright © 2025 Ryan Joo\n\n一款简单易用的目录结构生成工具',
         'empty_filename': '请输入文件名',
+        'drop_placeholder': '拖放文件夹到此处...',
     },
     'zh-TW': {
         'title': '目錄結構查看器',
@@ -61,6 +64,7 @@ LANG = {
         'about_title': '關於目錄結構查看器',
         'about_content': '目錄結構查看器 v1.0\n\nCopyright © 2025 Ryan Joo\n\n一款簡單易用的目錄結構生成工具',
         'empty_filename': '請輸入檔案名稱',
+        'drop_placeholder': '拖放文件夾到此處...',
     },
     'ja': {
         'title': 'ディレクトリツリービューアー',
@@ -85,6 +89,7 @@ LANG = {
         'about_title': 'ディレクトリツリービューアーについて',
         'about_content': 'ディレクトリツリービューアー v1.0\n\nCopyright © 2025 Ryan Joo\n\nディレクトリ構造を生成するシンプルなツール',
         'empty_filename': 'ファイル名を入力してください',
+        'drop_placeholder': 'フォルダをここにドラッグ...',
     },
     'ko': {
         'title': '디렉토리 트리 뷰어',
@@ -109,6 +114,7 @@ LANG = {
         'about_title': '디렉토리 트리 뷰어 정보',
         'about_content': '디렉토리 트리 뷰어 v1.0\n\nCopyright © 2025 Ryan Joo\n\n디렉토리 구조를 생성하는 간단한 도구',
         'empty_filename': '파일 이름을 입력하세요',
+        'drop_placeholder': '폴더를 여기에 드래그...',
     },
     'en': {
         'title': 'Directory Tree Viewer',
@@ -133,6 +139,7 @@ LANG = {
         'about_title': 'About Directory Tree Viewer',
         'about_content': 'Directory Tree Viewer v1.0\n\nCopyright © 2025 Ryan Joo\n\nA simple tool for generating directory structures',
         'empty_filename': 'Please enter a file name',
+        'drop_placeholder': 'Drag folder here...',
     }
 }
 
@@ -208,6 +215,7 @@ class DirectoryTreeApp:
         self._setup_tree_display()
         self._setup_statusbar()
         self._setup_menus()
+        self.setup_drag_drop()
 
     def _configure_styles(self):
         """配置GUI样式"""
@@ -223,6 +231,8 @@ class DirectoryTreeApp:
                              font=('Segoe UI', 10, 'bold'))
         self.style.configure('Warning.TButton', foreground='white', background='#dc3545',
                              font=('Segoe UI', 10))
+
+        self.style.configure('Drop.TEntry', foreground='#888', font=('Segoe UI', 10))
 
     def _setup_header(self):
         """创建顶部路径选择区域"""
@@ -248,6 +258,124 @@ class DirectoryTreeApp:
         btn_frame.pack(side=tk.RIGHT)
         ttk.Button(btn_frame, text=tr('generate'), style='Primary.TButton',
                    command=self.display_tree).pack(side=tk.LEFT, padx=2)
+
+        # 初始设置拖放占位符
+        self.set_drop_placeholder()
+
+        # 设置拖放功能
+        self.setup_drag_drop()
+
+    def setup_drag_drop(self):
+        """使用 tkinterdnd2 设置跨平台拖放功能"""
+        # 焦点事件处理
+        self.entry_path.bind('<FocusIn>', self.on_focus_in)
+        self.entry_path.bind('<FocusOut>', self.on_focus_out)
+
+        # 使用 tkinterdnd2 的拖放事件
+        self.entry_path.drop_target_register(DND_FILES)
+        self.entry_path.dnd_bind('<<DropEnter>>', self.on_dnd_drag_enter)
+        self.entry_path.dnd_bind('<<DropLeave>>', self.on_dnd_drag_leave)
+        self.entry_path.dnd_bind('<<Drop>>', self.on_dnd_drop)
+
+    def setup_windows_drag_drop(self):
+        """Windows 特定的拖放实现 - 无需额外依赖"""
+        # 注册拖放事件（Windows原生方式）
+        self.entry_path.bind('<Enter>', self.on_drag_enter)  # 在Windows上使用Enter事件
+        self.entry_path.bind('<Leave>', self.on_drag_leave)  # 使用Leave事件
+        self.entry_path.bind('<ButtonRelease-1>', self.on_windows_drop)  # 使用鼠标释放事件
+
+    def on_windows_drop(self, event):
+        """Windows 上的拖放模拟处理"""
+        try:
+            # 检查剪贴板中是否有文件/路径
+            import win32clipboard
+            win32clipboard.OpenClipboard()
+            if win32clipboard.IsClipboardFormatAvailable(win32clipboard.CF_HDROP):
+                # 获取拖放的文件列表
+                hdrop = win32clipboard.GetClipboardData(win32clipboard.CF_HDROP)
+                if hdrop and len(hdrop) > 0:
+                    path = hdrop[0]
+                    if os.path.isdir(path):
+                        self.clear_drop_placeholder()
+                        self.entry_path.delete(0, tk.END)
+                        self.entry_path.insert(0, path)
+                        self.entry_path.configure(background='white')  # 恢复背景色
+                        self.display_tree()
+            win32clipboard.CloseClipboard()
+        except ImportError:
+            # 如果无法导入 win32clipboard，则显示提示
+            messagebox.showinfo("提示", "在Windows上使用拖放功能需要pywin32模块")
+        except Exception as e:
+            self.entry_path.configure(background='white')  # 确保背景恢复
+            messagebox.showwarning(tr('error'), f"拖放处理错误: {str(e)}")
+
+    def set_drop_placeholder(self):
+        """设置拖放占位文本"""
+        if not self.entry_path.get():
+            self.entry_path.configure(style='Drop.TEntry')
+            self.entry_path.insert(0, tr('drop_placeholder'))
+
+    def clear_drop_placeholder(self):
+        """清除拖放占位文本"""
+        current_text = self.entry_path.get()
+        if current_text == tr('drop_placeholder'):
+            self.entry_path.delete(0, tk.END)
+            self.entry_path.configure(style='TEntry')
+
+    def on_focus_in(self, event):
+        """输入框获得焦点时的处理"""
+        self.clear_drop_placeholder()
+
+    def on_focus_out(self, event):
+        """输入框失去焦点时的处理"""
+        if not self.entry_path.get():
+            self.set_drop_placeholder()
+
+    def on_dnd_drag_enter(self, event):
+        """拖放进入时的处理"""
+        if event.data:
+            self.entry_path.configure(background='#e3f2fd')  # 高亮背景
+        return event.action  # 允许拖放
+
+    def on_dnd_drag_leave(self, event):
+        """拖放离开时的处理"""
+        self.entry_path.configure(background='white')  # 恢复背景色
+        return event.action
+
+    def on_dnd_drop(self, event):
+        """处理拖放文件事件"""
+        self.entry_path.configure(background='white')  # 恢复背景色
+
+        # 获取拖放的数据
+        data = event.data.strip()
+
+        # 处理特殊格式（Windows路径带有{}）
+        if data.startswith('{') and data.endswith('}'):
+            data = data[1:-1]
+
+        # 分割多个文件路径（拖放可能包含多个文件）
+        paths = data.split()
+        if not paths:
+            return
+
+        # 只取第一个有效文件夹
+        for path in paths:
+            if os.path.isdir(path):
+                self.clear_drop_placeholder()
+                self.entry_path.delete(0, tk.END)
+                self.entry_path.insert(0, path)
+                self.display_tree()  # 自动生成目录结构
+                break
+            elif os.path.isfile(path):
+                # 如果是文件，使用其所在目录
+                self.clear_drop_placeholder()
+                self.entry_path.delete(0, tk.END)
+                self.entry_path.insert(0, os.path.dirname(path))
+                self.display_tree()  # 自动生成目录结构
+                break
+        else:
+            # 没有找到有效文件夹或文件
+            messagebox.showwarning(tr('error'), tr('invalid_path'))
 
     def _setup_tree_display(self):
         """创建目录树显示区域"""
@@ -320,10 +448,19 @@ class DirectoryTreeApp:
         """切换应用程序语言"""
         global current_lang
         if current_lang != lang:
-            current_lang = lang
+            current_text = self.entry_path.get()
+            old_placeholder = tr('drop_placeholder')  # 切换前的旧占位符
+            current_lang = lang  # 切换语言
+            new_placeholder = tr('drop_placeholder')  # 切换后的新占位符
+
             self.root.title(tr('title'))  # 更新窗口标题
             self._update_widget_texts()  # 更新控件文本
             self._setup_menus()  # 重新创建菜单更新语言标记
+
+            # ✅ 更新占位符（如果当前是旧的占位符）
+            if current_text == old_placeholder:
+                self.entry_path.delete(0, tk.END)
+                self.entry_path.insert(0, new_placeholder)
 
     def _update_widget_texts(self):
         """更新界面控件上的文本（多语言支持）"""
@@ -451,7 +588,7 @@ class DirectoryTreeApp:
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
+    root = TkinterDnD.Tk()  # 使用 TkinterDnD 的窗口
 
 
     def get_resource_path(relative_path):
