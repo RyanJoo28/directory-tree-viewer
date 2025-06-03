@@ -1,4 +1,11 @@
-# Changelog
+## [1.1.1] - 2025-06-03
+### Added
+- **Horizontal Scrollbar**: Added horizontal scrolling capability to accommodate long file names without disrupting directory tree structure.  
+  _(Ensures directory integrity when dealing with lengthy file paths.)_
+
+### Changed
+- **Directory Tree Styling**: Enhanced the presentation of directory structures with clearer hierarchy visualization.  
+  _(Improved visual clarity using symbols like │, ├── and └── for better structure identification.)_
 
 ## [1.1.0] - 2025-06-02
 ### Added

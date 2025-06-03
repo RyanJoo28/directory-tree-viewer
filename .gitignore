@@ -22,8 +22,6 @@ ENV/
 .idea/
 .DS_Store
 Thumbs.db
-
-# 忽略特定文件
 iconmonstr-folder-30.svg
 show_tree_gui_pkg_cmd.txt
 /setup/

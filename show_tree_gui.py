@@ -1,9 +1,10 @@
 """
 目录结构查看器 - show_tree_gui.py
 功能：生成可视化的目录结构树，支持多语言、保存文件、复制内容等功能
-新增：支持拖放文件夹到输入框自动识别路径
+新增：横向滚动条
+修改：目录树显示风格
 作者：Ryan Joo
-版本：v1.1
+版本：v1.1.1
 """
 
 import os
@@ -37,7 +38,7 @@ LANG = {
         'language_menu': '语言',
         'about': '关于',
         'about_title': '关于目录结构查看器',
-        'about_content': '目录结构查看器 v1.1\n\nCopyright © 2025 Ryan Joo\n\n一款简单易用的目录结构生成工具',
+        'about_content': '目录结构查看器 v1.1.1\n\nCopyright © 2025 Ryan Joo\n\n一款简单易用的目录结构生成工具',
         'empty_filename': '请输入文件名',
         'drop_placeholder': '拖放文件夹到此处...',
     },
@@ -62,7 +63,7 @@ LANG = {
         'language_menu': '語言',
         'about': '關於',
         'about_title': '關於目錄結構查看器',
-        'about_content': '目錄結構查看器 v1.1\n\nCopyright © 2025 Ryan Joo\n\n一款簡單易用的目錄結構生成工具',
+        'about_content': '目錄結構查看器 v1.1.1\n\nCopyright © 2025 Ryan Joo\n\n一款簡單易用的目錄結構生成工具',
         'empty_filename': '請輸入檔案名稱',
         'drop_placeholder': '拖放文件夾到此處...',
     },
@@ -87,7 +88,7 @@ LANG = {
         'language_menu': '言語',
         'about': 'について',
         'about_title': 'ディレクトリツリービューアーについて',
-        'about_content': 'ディレクトリツリービューアー v1.1\n\nCopyright © 2025 Ryan Joo\n\nディレクトリ構造を生成するシンプルなツール',
+        'about_content': 'ディレクトリツリービューアー v1.1.1\n\nCopyright © 2025 Ryan Joo\n\nディレクトリ構造を生成するシンプルなツール',
         'empty_filename': 'ファイル名を入力してください',
         'drop_placeholder': 'フォルダをここにドラッグ...',
     },
@@ -112,7 +113,7 @@ LANG = {
         'language_menu': '언어',
         'about': '정보',
         'about_title': '디렉토리 트리 뷰어 정보',
-        'about_content': '디렉토리 트리 뷰어 v1.1\n\nCopyright © 2025 Ryan Joo\n\n디렉토리 구조를 생성하는 간단한 도구',
+        'about_content': '디렉토리 트리 뷰어 v1.1.1\n\nCopyright © 2025 Ryan Joo\n\n디렉토리 구조를 생성하는 간단한 도구',
         'empty_filename': '파일 이름을 입력하세요',
         'drop_placeholder': '폴더를 여기에 드래그...',
     },
@@ -137,7 +138,7 @@ LANG = {
         'language_menu': 'Language',
         'about': 'About',
         'about_title': 'About Directory Tree Viewer',
-        'about_content': 'Directory Tree Viewer v1.1\n\nCopyright © 2025 Ryan Joo\n\nA simple tool for generating directory structures',
+        'about_content': 'Directory Tree Viewer v1.1.1\n\nCopyright © 2025 Ryan Joo\n\nA simple tool for generating directory structures',
         'empty_filename': 'Please enter a file name',
         'drop_placeholder': 'Drag folder here...',
     }
@@ -382,17 +383,33 @@ class DirectoryTreeApp:
         display_frame = ttk.Frame(self.main_frame)
         display_frame.pack(expand=True, fill=tk.BOTH)
 
-        # 文本显示区（带滚动条）
-        text_frame = ttk.Frame(display_frame)
-        text_frame.pack(expand=True, fill=tk.BOTH)
+        # 滚动条框架 - 同时包含水平和垂直滚动条
+        scroll_frame = ttk.Frame(display_frame)
+        scroll_frame.pack(expand=True, fill=tk.BOTH)
 
-        self.text_output = tk.Text(text_frame, wrap=tk.WORD, font=(
-            'Consolas', 10), padx=10, pady=10)
-        scrollbar = ttk.Scrollbar(text_frame, command=self.text_output.yview)
-        self.text_output.config(yscrollcommand=scrollbar.set)
+        # 垂直滚动条
+        v_scrollbar = ttk.Scrollbar(scroll_frame, orient=tk.VERTICAL)
+        v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
+        # 水平滚动条
+        h_scrollbar = ttk.Scrollbar(scroll_frame, orient=tk.HORIZONTAL)
+        h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+
+        # 文本显示区域 - 关闭自动换行，开启水平和垂直滚动
+        self.text_output = tk.Text(
+            scroll_frame,
+            wrap=tk.NONE,  # 关闭自动换行，防止文件名被切断
+            font=('Consolas', 10),
+            padx=10,
+            pady=10,
+            xscrollcommand=h_scrollbar.set,
+            yscrollcommand=v_scrollbar.set
+        )
         self.text_output.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # 设置滚动条与文本区域的关联
+        v_scrollbar.config(command=self.text_output.yview)
+        h_scrollbar.config(command=self.text_output.xview)
 
         # 功能按钮区
         btn_frame = ttk.Frame(display_frame)
@@ -491,25 +508,81 @@ class DirectoryTreeApp:
             self.entry_path.delete(0, tk.END)
             self.entry_path.insert(0, path)
 
-    def generate_tree(self, dir_path, prefix=''):
-        """递归生成目录树结构文本
+    def generate_tree(self, dir_path, prefix='', is_root=True):
+        """生成结构化的目录树文本
 
         参数：
             dir_path: 当前目录路径
             prefix: 缩进前缀（用于递归）
+            is_root: 是否是根目录
 
         返回：
             格式化的目录树字符串
         """
-        tree_str = f"{prefix}{os.path.basename(dir_path)}/\n"
-        prefix += '....'
+        if is_root:
+            # 根目录特殊处理
+            tree_str = f"{os.path.basename(dir_path)}/\n"
+            tree_str += "│\n"  # 根目录下的竖线
+        else:
+            # 子目录处理
+            tree_str = ""
+
         try:
-            for item in sorted(os.listdir(dir_path)):
-                path = os.path.join(dir_path, item)
-                tree_str += self.generate_tree(path, prefix) if os.path.isdir(
-                    path) else f"{prefix}{item}\n"
+            entries = sorted(os.listdir(dir_path))
+            entries = [e for e in entries if not e.startswith('.')]  # 忽略隐藏文件
+
+            # 分离文件和文件夹
+            dirs = [e for e in entries if os.path.isdir(os.path.join(dir_path, e))]
+            files = [e for e in entries if not os.path.isdir(os.path.join(dir_path, e))]
+
+            items = dirs + files  # 先列出目录，再列出文件
+            total_items = len(items)
+
+            for i, item in enumerate(items):
+                item_path = os.path.join(dir_path, item)
+                is_last = (i == total_items - 1)
+
+                # 处理前缀
+                connector = "├── " if not is_last else "└── "
+                vertical = "│   " if not is_last else "    "
+
+                if is_root:
+                    # 根目录下的项目
+                    if i == 0:
+                        tree_str += prefix + "├── "
+                    else:
+                        tree_str += prefix + connector
+
+                    # 目录项后添加斜杠
+                    if os.path.isdir(item_path):
+                        tree_str += f"{item}/\n"
+                    else:
+                        tree_str += f"{item}\n"
+
+                    # 递归处理子目录
+                    if os.path.isdir(item_path):
+                        new_prefix = prefix + vertical
+                        tree_str += self.generate_tree(item_path, new_prefix, False)
+                else:
+                    # 子目录下的项目
+                    tree_str += prefix + connector
+
+                    if os.path.isdir(item_path):
+                        tree_str += f"{item}/\n"
+                        new_prefix = prefix + vertical
+                        tree_str += self.generate_tree(item_path, new_prefix, False)
+                    else:
+                        tree_str += f"{item}\n"
+
+                    # 添加分隔线（最后一个项目不添加）
+                    if not is_last:
+                        tree_str += prefix + vertical + "\n"
+
         except PermissionError:
-            tree_str += f"{prefix}[Permission Denied]\n"
+            tree_str += prefix + "│   [Permission Denied]\n"
+        except Exception as e:
+            tree_str += prefix + f"│   [Error: {str(e)}]\n"
+
         return tree_str
 
     def display_tree(self):
