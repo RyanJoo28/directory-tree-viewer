@@ -51,6 +51,10 @@ pip freeze > requirements.txt
 pyinstaller --onefile --icon=assets/icon.ico show_tree_gui.py
 ```
 
+## 📝 修改日志
+
+详见 [CHANGELOG.md](https://github.com/RyanJoo28/directory-tree-viewer/blob/main/CHANGELOG.md)
+
 ## 📜 许可证
 
 本项目采用 [MIT License](LICENSE)
